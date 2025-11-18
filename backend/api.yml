@@ -1,0 +1,198 @@
+openapi: 3.0.0
+info:
+  title: Asana Replica API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+paths:
+  /home:
+    get:
+      summary: Get overview data for Home dashboard
+      responses:
+        '200':
+          description: Home dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  widgets:
+                    type: object
+                    properties:
+                      total_tasks:
+                        type: integer
+                      completed_tasks:
+                        type: integer
+                      overdue_tasks:
+                        type: integer
+                      this_week_completed:
+                        type: integer
+                  recent_projects:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProjectSummary"
+                  my_tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TaskSummary"
+
+  /projects:
+    get:
+      summary: List projects
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Optional search term for project name
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Project"
+  /projects/{project_id}:
+    get:
+      summary: Get a single project with tasks
+      parameters:
+        - in: path
+          name: project_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectWithTasks"
+        '404':
+          description: Project not found
+
+  /tasks:
+    get:
+      summary: List tasks assigned to the current user
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [open, completed, overdue]
+        - in: query
+          name: project_id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+  /tasks/{task_id}:
+    get:
+      summary: Get a single task
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        '404':
+          description: Task not found
+
+components:
+  schemas:
+    ProjectSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    TaskSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        status:
+          type: string
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        color:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    ProjectWithTasks:
+      allOf:
+        - $ref: "#/components/schemas/Project"
+        - type: object
+          properties:
+            tasks:
+              type: array
+              items:
+                $ref: "#/components/schemas/TaskSummary"
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [open, completed, overdue]
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        project_id:
+          type: integer
+          nullable: true
+        assignee_id:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string

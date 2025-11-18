@@ -1,0 +1,6 @@
+.env
+*.env
+.env.local
+backend/.env
+frontend/.env*
+agent/.env
